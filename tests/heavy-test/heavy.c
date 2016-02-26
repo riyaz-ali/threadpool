@@ -1,9 +1,14 @@
 #include <stdio.h>
-#include <pthread.h>
-#include <unistd.h>
 #include <assert.h>
 
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+
 #include "threadpool.h"
+
+//Link against the ThreadPool.lib
+#pragma comment(lib, "ThreadPool.lib")
+
 
 #define THREAD 4
 #define SIZE   8192
@@ -18,7 +23,8 @@
 
 threadpool_t *pool[QUEUES];
 int tasks[SIZE], left;
-pthread_mutex_t lock;
+CRITICAL_SECTION lock;
+
 
 int error;
 
@@ -29,9 +35,9 @@ void dummy_task(void *arg) {
     if(*pi < QUEUES) {
         assert(threadpool_add(pool[*pi], &dummy_task, arg, 0) == 0);
     } else {
-        pthread_mutex_lock(&lock);
+		EnterCriticalSection(&lock);
         left--;
-        pthread_mutex_unlock(&lock);
+		LeaveCriticalSection(&lock);
     }
 }
 
@@ -40,14 +46,14 @@ int main(int argc, char **argv)
     int i, copy = 1;
 
     left = SIZE;
-    pthread_mutex_init(&lock, NULL);
+	InitializeCriticalSection(&lock);
 
     for(i = 0; i < QUEUES; i++) {
         pool[i] = threadpool_create(THREAD, SIZE, 0);
         assert(pool[i] != NULL);
     }
 
-    usleep(10);
+    Sleep(10);
 
     for(i = 0; i < SIZE; i++) {
         tasks[i] = 0;
@@ -55,17 +61,17 @@ int main(int argc, char **argv)
     }
 
     while(copy > 0) {
-        usleep(10);
-        pthread_mutex_lock(&lock);
+        Sleep(10);
+		EnterCriticalSection(&lock);
         copy = left;
-        pthread_mutex_unlock(&lock);
+		LeaveCriticalSection(&lock);
     }
 
     for(i = 0; i < QUEUES; i++) {
         assert(threadpool_destroy(pool[i], 0) == 0);
     }
 
-    pthread_mutex_destroy(&lock);
+	DeleteCriticalSection(&lock);
 
     return 0;
 }

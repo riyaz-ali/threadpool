@@ -1,31 +1,35 @@
 #include <stdio.h>
-#include <pthread.h>
-#include <unistd.h>
 #include <assert.h>
 
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+
 #include "threadpool.h"
+
+//Link to ThreadPool.lib
+#pragma comment(lib, "ThreadPool.lib")
 
 #define THREAD 4
 #define SIZE   8192
 
 threadpool_t *pool;
 int left;
-pthread_mutex_t lock;
+CRITICAL_SECTION lock;
 
 int error;
 
 void dummy_task(void *arg) {
-    usleep(100);
-    pthread_mutex_lock(&lock);
+    Sleep(100);
+	EnterCriticalSection(&lock);
     left--;
-    pthread_mutex_unlock(&lock);
+	LeaveCriticalSection(&lock);
 }
 
 int main(int argc, char **argv)
 {
     int i;
 
-    pthread_mutex_init(&lock, NULL);
+	InitializeCriticalSection(&lock);
 
     /* Testing immediate shutdown */
     left = SIZE;
@@ -45,7 +49,7 @@ int main(int argc, char **argv)
     assert(threadpool_destroy(pool, threadpool_graceful) == 0);
     assert(left == 0);
 
-    pthread_mutex_destroy(&lock);
+	DeleteCriticalSection(&lock);
 
     return 0;
 }
