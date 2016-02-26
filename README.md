@@ -32,11 +32,11 @@ Usage
 You can either build a static library of the source with the supplied Visual Studio solution or just drop-in the Header and Source filein your
 code.
 	
----
-threadpool_t* pool = threadpool_create(NUMOFTHREADS, SIZEOFQUEUE, 0);
+	---
+	threadpool_t* pool = threadpool_create(NUMOFTHREADS, SIZEOFQUEUE, 0);
 
-//to add a task to queue
-threadpool_add( pool, &TASK, (void*)ARGS, 0);	//@note: task should have the signature void (*routine)(void*)
+	//to add a task to queue
+	threadpool_add( pool, &TASK, (void*)ARGS, 0);	//@note: task should have the signature void (*routine)(void*)
 	
-//to destroy the pool
-threadpool_destroy( pool, FLAG);	//FLAG can be 0 or threadpool_graceful 
+	//to destroy the pool
+	threadpool_destroy( pool, FLAG);	//FLAG can be 0 or threadpool_graceful 
